@@ -1,17 +1,21 @@
-const app = require("express")();
-const { v4 } = require("uuid");
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const citiesRoutes = require("./routes/cities");
+const itineraryRoutes = require("./routes/itinerary");
+const destinationRoutes = require("./routes/destination");
+const tripRoutes = require("./routes/trip");
 
-app.get("/api", (req, res) => {
-  const path = `/api/item/${v4()}`;
-  res.setHeader("Content-Type", "text/html");
-  res.setHeader("Cache-Control", "s-max-age=1, stale-while-revalidate");
-  res.end(`Hello! Go to item: <a href="${path}">${path}</a>`);
-});
+// Middleware to parse JSON request body
+app.use(express.json());
+app.use(cors());
 
-app.get("/api/item/:slug", (req, res) => {
-  const { slug } = req.params;
-  res.end(`Item: ${slug}`);
-});
+app.use("/api/cities", citiesRoutes);
+app.use("/api/itinerary", itineraryRoutes);
+app.use("/api/itineraries", itineraryRoutes);
+app.use("/api/destination", destinationRoutes);
+app.use("/api/destinations", destinationRoutes);
+app.use("/api/trip", tripRoutes);
+app.use("/api/trips", tripRoutes);
 
-app.listen(3000);
-module.exports = app;
+app.listen(5000);

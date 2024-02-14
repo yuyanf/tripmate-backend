@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
+
 router.post("/", async (req, res) => {
   const {
     title,
@@ -42,8 +46,36 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
-  const tripId = req.params.id;
+// PUT endpoint to update a Trip
+router.put("/:tripId", async (req, res) => {
+  const tripId = parseInt(req.params.tripId);
+  const updatedTripData = req.body;
+
+  try {
+    // Check if the Trip exists
+    const existingTrip = await prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+
+    if (!existingTrip) {
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    // Update the Trip record
+    const updatedTrip = await prisma.trip.update({
+      where: { id: tripId },
+      data: updatedTripData,
+    });
+
+    res.status(200).json(updatedTrip);
+  } catch (error) {
+    console.error("Error updating trip:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/:tripId", async (req, res) => {
+  const tripId = req.params.tripId;
 
   try {
     const query = {

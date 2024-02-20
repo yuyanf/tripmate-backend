@@ -1,9 +1,5 @@
 const { gql } = require("apollo-server-express");
-const { Pool } = require("pg");
-
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_DATABASE,
-});
+const pool = require("./db");
 
 const typeDefs = gql`
   type User {

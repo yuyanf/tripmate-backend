@@ -11,38 +11,40 @@ router.post("/", async (req, res) => {
     title,
     startDate,
     endDate,
+    userId,
     items,
-    image,
     numberOfPeople,
     relationship,
     totalBudget,
     editors,
+    status,
   } = req.body;
 
   try {
     const query = {
       text: `
-          INSERT INTO "Trip" (title, startDate, endDate, items, image, numberOfPeople, relationship, totalBudget, editors)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          INSERT INTO "Trip" (title, startDate, endDate, userId, items, numberOfPeople, relationship, totalBudget, editors, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)
           RETURNING *;
         `,
       values: [
         title,
         startDate,
         endDate,
+        userId,
         items,
-        image,
         numberOfPeople,
         relationship,
         totalBudget,
         editors,
+        status,
       ],
     };
     const result = await pool.query(query);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error("Error creating itinerary:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "can't create trip" });
   }
 });
 

@@ -12,7 +12,6 @@ router.post("/", async (req, res) => {
     startDate,
     endDate,
     userId,
-    items,
     numberOfPeople,
     relationship,
     totalBudget,
@@ -21,58 +20,36 @@ router.post("/", async (req, res) => {
   } = req.body;
 
   try {
-    const query = {
-      text: `
-          INSERT INTO "Trip" (title, startDate, endDate, userId, items, numberOfPeople, relationship, totalBudget, editors, status)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)
-          RETURNING *;
-        `,
-      values: [
+    if (
+      !title ||
+      !startDate ||
+      !endDate ||
+      !userId ||
+      !numberOfPeople ||
+      !editors ||
+      !status
+    ) {
+      // If any required field is missing, return a 400 Bad Request response
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const trip = await prisma.trip.create({
+      data: {
         title,
         startDate,
         endDate,
         userId,
-        items,
         numberOfPeople,
         relationship,
         totalBudget,
         editors,
         status,
-      ],
-    };
-    const result = await pool.query(query);
-    res.status(201).json(result.rows[0]);
+      },
+    });
+
+    res.status(201).json(trip);
   } catch (error) {
-    console.error("Error creating itinerary:", error);
+    console.error("Error creating trip:", error);
     res.status(500).json({ error: "can't create trip" });
-  }
-});
-
-// PUT endpoint to update a Trip
-router.put("/:tripId", async (req, res) => {
-  const tripId = parseInt(req.params.tripId);
-  const updatedTripData = req.body;
-
-  try {
-    // Check if the Trip exists
-    const existingTrip = await prisma.trip.findUnique({
-      where: { id: tripId },
-    });
-
-    if (!existingTrip) {
-      return res.status(404).json({ error: "Trip not found" });
-    }
-
-    // Update the Trip record
-    const updatedTrip = await prisma.trip.update({
-      where: { id: tripId },
-      data: updatedTripData,
-    });
-
-    res.status(200).json(updatedTrip);
-  } catch (error) {
-    console.error("Error updating trip:", error);
-    res.status(500).json({ error: "Internal server error" });
   }
 });
 

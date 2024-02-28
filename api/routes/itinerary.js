@@ -25,58 +25,43 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/bulk_itineraries", async (req, res) => {
-  const itineraryDataArray = req.body; // Array of itinerary data objects
+  const itineraries = req.body; // Array of itinerary data objects
+  const createdItineraries = [];
 
   try {
-    const insertedItineraries = [];
-
-    // Loop through the array of itinerary data objects
-    for (const itineraryData of itineraryDataArray) {
-      const { date, items, checkList, destinationId } = itineraryData;
-
-      // Perform the database insertion for each itinerary
-      const query = {
-        text: `
-          INSERT INTO "Itinerary" (date, items, checkList, destination_id)
-          VALUES ($1, $2, $3, $4)
-          RETURNING *;
-        `,
-        values: [date, items, checkList, destinationId],
-      };
-
-      const result = await pool.query(query);
-      insertedItineraries.push(result.rows[0]); // Push the inserted itinerary to the array
+    if (!Array.isArray(itineraries)) {
+      return res
+        .status(400)
+        .json({ error: "Request body must be an array of itineraries" });
     }
 
-    res.status(201).json(insertedItineraries); // Return the array of inserted itineraries
-  } catch (error) {
-    console.error("Error creating itineraries:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    for (const item of itineraries) {
+      const { destinationId, dates } = item;
+      if (!destinationId) {
+        return res.status(400).json({ error: "Missing destination Id" });
+      }
 
-router.put("/bulk_itineraries", async (req, res) => {
-  const updatedItinerariesData = req.body;
-
-  try {
-    const updatedItineraries = await Promise.all(
-      updatedItinerariesData.map(async (ItineraryData) => {
-        const itineraryId = ItineraryData.id;
-        // Update the Destination record
-        const updatedItinerary = await prisma.itinerary.update({
-          where: { id: itineraryId },
-          data: ItineraryData,
-          include: {
-            items: true,
+      // Iterate over dates array
+      for (const date of dates) {
+        if (!date) {
+          return res.status(400).json({ error: "Missing date" });
+        }
+        // Create itinerary object for each date
+        const createdItinerary = await prisma.itinerary.create({
+          data: {
+            destinationId: destinationId,
+            date: date,
           },
         });
-        return updatedItinerary;
-      })
-    );
-
-    res.status(200).json(updatedItineraries);
+        createdItineraries.push(createdItinerary);
+      }
+    }
+    res.status(201).json({
+      message: "Itineraries created successfully",
+      itineraries: createdItineraries,
+    });
   } catch (error) {
-    console.error("Error updating itineraries:", error);
+    console.error("Error creating itineraries:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
